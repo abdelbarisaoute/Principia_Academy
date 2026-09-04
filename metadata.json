@@ -1,0 +1,6 @@
+{
+  "name": "Principia - Open Mathematics & Physics Library",
+  "description": "An open, structured digital academic library for studying and authoring mathematics and physics textbooks, courses, lessons, and exercises with full LaTeX rendering.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

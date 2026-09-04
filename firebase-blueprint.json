@@ -1,0 +1,40 @@
+{
+  "projectInfo": {
+    "description": "Principia Library database schema"
+  },
+  "collections": [
+    {
+      "name": "users",
+      "documentType": "User",
+      "description": "Users of the platform",
+      "schema": {
+        "uid": { "type": "string", "description": "Firebase Auth UID" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string", "optional": true },
+        "photoURL": { "type": "string", "optional": true },
+        "role": { "type": "string", "description": "admin, scholar, or reader" },
+        "createdAt": { "type": "timestamp" },
+        "savedNotes": { "type": "string", "optional": true }
+      },
+      "securityRules": {
+        "read": "request.auth != null && (request.auth.uid == documentId || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')",
+        "write": "request.auth != null && (request.auth.uid == documentId || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')"
+      }
+    },
+    {
+      "name": "progress",
+      "documentType": "UserProgress",
+      "description": "User progress across courses",
+      "schema": {
+        "userId": { "type": "string" },
+        "completedLessonIds": { "type": "array", "items": { "type": "string" } },
+        "bookmarkedLessonIds": { "type": "array", "items": { "type": "string" } },
+        "updatedAt": { "type": "timestamp" }
+      },
+      "securityRules": {
+        "read": "request.auth != null && request.auth.uid == resource.data.userId",
+        "write": "request.auth != null && request.auth.uid == request.resource.data.userId"
+      }
+    }
+  ]
+}
