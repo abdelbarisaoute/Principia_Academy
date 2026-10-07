@@ -238,7 +238,7 @@ export const LessonReader: React.FC<LessonReaderProps> = ({
             </button>
 
             {/* Author Edit Button (if author or admin) */}
-            {(currentUser?.role === 'admin' || currentUser?.role === 'contributor') && onEditLesson && (
+            {(currentUser?.role === 'admin' || currentUser?.role === 'contributor' || currentUser?.role === 'author') && onEditLesson && (
               <button
                 onClick={() => onEditLesson(lesson.id)}
                 className="px-2.5 py-1 bg-amber-800 hover:bg-amber-900 text-white rounded-md font-medium text-xs transition"
