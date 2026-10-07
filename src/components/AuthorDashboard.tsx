@@ -233,8 +233,17 @@ export const AuthorDashboard: React.FC<AuthorDashboardProps> = ({
         alert("Please connect with Google first from the top right user menu.");
         return;
       }
+      if (!config.oAuthClientId) {
+        alert("Google OAuth client is not configured.");
+        return;
+      }
+      const googleOauth = (window as any).google?.accounts?.oauth2;
+      if (!googleOauth?.initTokenClient) {
+        alert("Google services are still loading. Please wait a moment and try again.");
+        return;
+      }
       
-      const client = (window as any).google.accounts.oauth2.initTokenClient({
+      const client = googleOauth.initTokenClient({
         client_id: config.oAuthClientId,
         scope: 'https://www.googleapis.com/auth/drive.file',
         callback: async (tokenResponse: any) => {
@@ -270,7 +279,7 @@ export const AuthorDashboard: React.FC<AuthorDashboardProps> = ({
         },
       });
       
-      client.requestAccessToken();
+      client.requestAccessToken({ prompt: 'consent' });
       
     } catch(e) {
       console.error(e);

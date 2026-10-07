@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User, onAuthStateChanged, signInWithPopup } from 'firebase/auth';
+import { User, onAuthStateChanged, signInWithPopup, signInWithRedirect } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db, googleProvider } from './firebase';
 import { User as AppUser, UserRole } from '../types';
@@ -110,7 +110,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setLoading(true);
       await signInWithPopup(auth, googleProvider);
-    } catch (error) {
+    } catch (error: any) {
+      const popupBlocked = error?.code === 'auth/popup-blocked' || error?.code === 'auth/cancelled-popup-request';
+      if (popupBlocked) {
+        await signInWithRedirect(auth, googleProvider);
+        return;
+      }
       console.error('Error signing in with Google:', error);
       throw error;
     } finally {

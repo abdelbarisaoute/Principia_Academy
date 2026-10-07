@@ -20,6 +20,7 @@ import {
 
 export function App() {
   const { appUser, currentUser: authUser, signInWithGoogle, signOut, loading: authLoading } = useAuth();
+  const [authError, setAuthError] = useState<string | null>(null);
   
   // Navigation Route State
   const [currentView, setCurrentView] = useState<'home' | 'course' | 'reader' | 'editor' | 'dashboard' | 'admin' | 'contribute'>('home');
@@ -44,6 +45,7 @@ export function App() {
     role: authUser.email === 'abdelbarisaoutelhak@gmail.com' ? 'admin' as UserRole : 'reader' as UserRole,
     institution: 'Offline Mode'
   } : null);
+  const canUseAuthorStudio = currentUser?.role === 'admin' || currentUser?.role === 'contributor' || currentUser?.role === 'author';
 
   // Data cache
   const [courses, setCourses] = useState<Course[]>(storage.getCourses());
@@ -89,6 +91,7 @@ export function App() {
   };
 
   const handleEditLesson = (lessonId: string) => {
+    if (!canUseAuthorStudio) return;
     setEditingLessonId(lessonId);
     setCurrentView('editor');
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -98,8 +101,12 @@ export function App() {
   useEffect(() => {
     if (!currentUser && ['dashboard', 'admin', 'contribute', 'editor'].includes(currentView)) {
       setCurrentView('home');
+      return;
     }
-  }, [currentUser, currentView]);
+    if (currentUser && !canUseAuthorStudio && ['admin', 'editor'].includes(currentView)) {
+      setCurrentView('home');
+    }
+  }, [currentUser, currentView, canUseAuthorStudio]);
 
   // Derived current course, chapter, lesson
   const currentCourse = courses.find(c => c.slug === selectedCourseSlug) || courses[0];
@@ -154,7 +161,7 @@ export function App() {
                   My Study Space
                 </button>
               )}
-              {(currentUser?.role === 'admin' || currentUser?.role === 'contributor') && (
+              {canUseAuthorStudio && (
                 <button
                   onClick={() => setCurrentView('admin')}
                   className={`px-3 py-1.5 rounded-lg transition flex items-center gap-1 ${currentView === 'admin' ? 'text-amber-800 dark:text-amber-400 font-bold bg-amber-50 dark:bg-amber-950/50' : 'hover:text-neutral-900 dark:hover:text-neutral-100'}`}
@@ -234,7 +241,14 @@ export function App() {
                 </>
               ) : (
                 <button
-                  onClick={() => signInWithGoogle()}
+                  onClick={async () => {
+                    setAuthError(null);
+                    try {
+                      await signInWithGoogle();
+                    } catch (e: any) {
+                      setAuthError(e?.message || 'Failed to connect with Google. Please try again.');
+                    }
+                  }}
                   className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold transition"
                 >
                   <LogIn className="w-3.5 h-3.5" />
@@ -244,6 +258,11 @@ export function App() {
             </div>
           </div>
         </div>
+        {authError && (
+          <div className="max-w-7xl mx-auto px-4 sm:px-8 pb-3 text-xs text-red-600 dark:text-red-400">
+            {authError}
+          </div>
+        )}
       </header>
 
       {/* Main View Router */}
@@ -294,7 +313,7 @@ export function App() {
         )}
 
         {/* VIEW 4: BLOCK-BASED LESSON AUTHOR STUDIO */}
-        {currentView === 'editor' && (
+        {currentView === 'editor' && canUseAuthorStudio && (
           <LessonEditor
             initialLesson={activeEditingLesson}
             onSave={(saved) => {
@@ -316,7 +335,7 @@ export function App() {
         )}
 
         {/* VIEW 6: AUTHOR & ADMIN EDITORIAL DESK */}
-        {currentView === 'admin' && (
+        {currentView === 'admin' && canUseAuthorStudio && (
           <AuthorDashboard
             currentUser={currentUser}
             onEditLesson={handleEditLesson}
@@ -358,7 +377,9 @@ export function App() {
           <div className="flex items-center gap-4">
             <button onClick={() => setCurrentView('home')} className="hover:underline">Catalog</button>
             <button onClick={() => setCurrentView('contribute')} className="hover:underline">Peer Review</button>
-            <button onClick={() => setCurrentView('admin')} className="hover:underline">Editorial Desk</button>
+            {canUseAuthorStudio && (
+              <button onClick={() => setCurrentView('admin')} className="hover:underline">Editorial Desk</button>
+            )}
             <span className="text-neutral-400">CC-BY-NC-SA 4.0 Open Science License</span>
           </div>
         </div>
